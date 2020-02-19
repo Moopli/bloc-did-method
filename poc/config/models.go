@@ -6,6 +6,13 @@ SPDX-License-Identifier: Apache-2.0
 
 package config
 
+import (
+	"encoding/json"
+
+	"github.com/multiformats/go-multibase"
+	"github.com/multiformats/go-multihash"
+)
+
 // Models for config files
 
 /*
@@ -30,6 +37,22 @@ type ConsortiumConfig struct {
 	Signatures []DetachedJWS `json:"signatures"`
 	// Previous contains a hashlink to the previous version of this file. Optional.
 	Previous string `json:"previous,omitempty"`
+}
+
+func (cc *ConsortiumConfig) Copy() *ConsortiumConfig {
+	stakeHolders := make([]StakeholderListElement, len(cc.Stakeholders))
+	copy(stakeHolders, cc.Stakeholders)
+
+	signatures := make([]DetachedJWS, len(cc.Signatures))
+	copy(signatures, cc.Signatures)
+
+	return &ConsortiumConfig{
+		Domain:       cc.Domain,
+		Policy:       cc.Policy,
+		Stakeholders: stakeHolders,
+		Signatures:   signatures,
+		Previous:     cc.Previous,
+	}
 }
 
 type ConsortiumPolicy struct {
@@ -68,12 +91,51 @@ type StakeholderConfig struct {
 	Previous string `json:"previous,omitempty"`
 }
 
+func (sc *StakeholderConfig) Copy() *StakeholderConfig {
+	endPoints := make([]string, len(sc.Endpoints))
+	copy(endPoints, sc.Endpoints)
+
+	return &StakeholderConfig{
+		Domain:    sc.Domain,
+		Config:    sc.Config.Copy(),
+		Endpoints: endPoints,
+		Signature: sc.Signature,
+		Previous:  sc.Previous,
+	}
+}
+
 // StakeholderSettings holds the stakeholder settings
 type StakeholderSettings struct {
 	Cache CacheControl `json:"cache"`
 }
 
+func (ss *StakeholderSettings) Copy() StakeholderSettings {
+	return StakeholderSettings{
+		Cache: ss.Cache,
+	}
+}
+
 // CacheControl holds cache settings for this file, indicating to the recipient how long until they should check for a new version of the file.
 type CacheControl struct {
 	MaxAge uint32 `json:"max-age"`
+}
+
+// MarshalAndHash marshals a json struct and returns the marshaled bytes and the hash of the data
+func MarshalAndHash(data interface{}) (string, []byte, error) {
+	bytes, err := json.Marshal(data)
+	if err != nil {
+		return "", nil, err
+	}
+
+	hash, err := multihash.Sum(bytes, multihash.SHA2_256, -1)
+	if err != nil {
+		return "", nil, err
+	}
+
+	key, err := multibase.Encode(multibase.Base58BTC, hash)
+	if err != nil {
+		return "", nil, err
+	}
+
+	return key, bytes, nil
 }

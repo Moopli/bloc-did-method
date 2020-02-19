@@ -12,6 +12,4 @@ type FileProvider interface {
 	Open(filePath string) ([]byte, error)
 	// Save saves the given data as a file to the given location, with the given file extension, with the name being a hash of the contents
 	Save(loc, ext string, data []byte) (string, error)
-	// MkDir makes a directory with the given name
-	MkDir(dir string) error
 }
