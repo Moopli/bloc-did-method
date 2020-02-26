@@ -21,6 +21,6 @@ func TestManager_CreateConsortium(t *testing.T) {
 	}
 
 	m := Manager{HashFile: &LocalFileProvider{}}
-	err = m.CreateConsortium("tmp/")
+	_, err = m.CreateConsortium("tmp/")
 	require.NoError(t, err)
 }

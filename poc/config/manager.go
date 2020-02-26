@@ -18,6 +18,8 @@ type Manager struct {
 	HashFile FileProvider
 }
 
+// TODO: redesign Manager to be based around building and applying ChangeSets instead of composing separate file operations
+
 // SaveFile saves data to a file named with the SHA-256 hash of the file contents, within the directory dir
 // Returns the name of the file
 func SaveFile(filePath string, data []byte) (string, error) {
@@ -64,24 +66,4 @@ func (m *Manager) CreateConsortium(uri string) (*ConsortiumConfig, error) {
 	println(fp)
 
 	return &consconf, nil
-}
-
-func (m *Manager) CreateStakeholder(cc *ConsortiumConfig, stakeholderDomain string) (*StakeholderConfig, error) {
-	cons_loc := path.Join(cc.Domain, "stakeholders")
-	sd_loc := path.Join(stakeholderDomain, "stakeholders")
-
-	stakeholder := StakeholderConfig{
-		Domain:    stakeholderDomain,
-		Config:    StakeholderSettings{},
-		Endpoints: nil,
-		Signature: DetachedJWS{},
-		Previous:  "",
-	}
-
-	data, err := json.Marshal(stakeholder)
-	if err != nil {
-		return nil, err
-	}
-
-	return &stakeholder, nil
 }
